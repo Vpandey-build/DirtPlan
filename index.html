@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Veg Diet Plan – Weight Gain</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f7d4f">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f6f8f3;--card:#fff;--ink:#1f2a22;--mute:#5d6b61;--line:#dbe3d6;--accent:#2f7d4f;--soft:#e4f1e8;--danger:#b3372f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#141a16;--card:#1d2620;--ink:#e8efe9;--mute:#9aa99f;--line:#2e3b32;--accent:#5cc189;--soft:#25382c;--danger:#ef8a82;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+main{max-width:640px;margin:0 auto;padding:16px 14px 80px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+h1{font-size:1.4rem;margin:8px 0 2px}
+.sub{color:var(--mute);font-size:.9rem;margin:0 0 8px}
+.bar{position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:5;border-bottom:1px solid var(--line)}
+.track{height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.fill{height:100%;width:0;background:var(--accent);transition:width .25s}
+.pct{display:flex;justify-content:space-between;font-size:.9rem;margin-top:4px}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:14px 0;padding:12px 14px}
+section h2{font-size:1.05rem;margin:0;display:flex;justify-content:space-between;gap:8px}
+section h2 span{color:var(--mute);font-weight:400;font-size:.85rem}
+.note{color:var(--mute);font-size:.85rem;margin:2px 0 6px}
+.row{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}
+section>.row:first-of-type,section>.note+.row{border-top:0}
+label.row{cursor:pointer}
+input[type=checkbox]{width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent);flex:none}
+input:checked+div{color:var(--mute);text-decoration:line-through}
+small{display:block;color:var(--mute);font-size:.82rem}
+.done h2{color:var(--accent)}
+button,.btn{font:inherit;padding:9px 14px;border-radius:10px;border:1px solid var(--accent);background:var(--soft);color:var(--ink);cursor:pointer}
+button.ghost{background:transparent;border-color:var(--line)}
+button.del{border-color:var(--danger);color:var(--danger);background:transparent;padding:6px 10px;flex:none}
+input[type=text],input[type=number]{font:inherit;width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
+.ed{flex:1;display:flex;flex-direction:column;gap:6px}
+.edhead{display:flex;gap:8px;align-items:center}
+.edhead .time{max-width:120px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.hide{display:none}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.titleinp{font-size:1.3rem;font-weight:600}
+.h{display:grid;grid-template-columns:62px 1fr 42px;gap:8px;align-items:center;font-size:.85rem;padding:4px 0}
+.h.today{font-weight:600}
+.h .track{height:8px}
+.h b{text-align:right;font-weight:500}
+.wrow{display:flex;gap:8px;margin:8px 0}
+.wrow input{max-width:130px}
+.wl{display:flex;justify-content:space-between;align-items:center;font-size:.88rem;padding:5px 0;border-top:1px solid var(--line)}
+.wl button{padding:2px 8px}
+svg.ch{width:100%;height:110px;margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+<div class="top">
+<div style="flex:1;min-width:0"><div id="titleWrap"></div>
+<p class="sub" id="sub">Tick items as you eat. Tap “Edit plan” to rename, add or remove anything.</p></div>
+<button id="editBtn">Edit plan</button>
+</div>
+<div class="bar"><div class="track"><div class="fill" id="fill"></div></div>
+<div class="pct"><span id="pct">0%</span><span id="date"></span></div></div>
+<div id="app"></div>
+<section id="hist"></section>
+<section id="wt"><h2>Weight log</h2>
+<div class="wrow"><input type="number" id="wIn" step="0.1" min="20" max="300" inputmode="decimal" placeholder="kg today" aria-label="Weight in kg"><button id="wAdd">Save weight</button></div>
+<div id="wOut"></div></section>
+<div class="tools">
+<button id="addSlot" class="ghost hide">+ Add meal</button>
+<button id="reset" class="ghost">Clear today’s ticks</button>
+<button id="export" class="ghost hide">Export plan</button>
+<button id="import" class="ghost hide">Import plan</button>
+<button id="restore" class="ghost hide">Restore original plan</button>
+<button id="bring" class="ghost hide">Bring back deleted meals</button>
+<button id="undo" class="ghost hide">Undo restore</button>
+<input type="file" id="file" accept="application/json" class="hide">
+</div>
+</main>
+<script>
+var DEFAULT={title:"Veg Diet Plan – Weight Gain",slots:[
+{t:"Early morning",time:"On waking",items:[["1 glass warm water"],["3 soaked almonds"],["2 dates"],["1 soaked fig"],["1 walnut"],["1 cashew"]]},
+{t:"Breakfast",time:"9:00 am",items:[["Idli / dosa / poha / paratha","with chutney, sambar or curd"],["1 tsp ghee"],["1 banana"],["1 tsp peanut butter"]]},
+{t:"Mid meal",time:"11:00 am",items:[["1 dry fruit laddu","dates, nuts, raisins, coconut, ghee, cardamom"]]},
+{t:"Lunch",time:"1:00 pm",items:[["3 small chapatis OR 1 medium millet roti"],["¾ bowl cooked rice"],["1 tsp ghee"],["1 cup vegetable","less oil"],["1 cup thick dal OR boiled sprouts"],["1 glass buttermilk + 1 tsp jeera powder"],["1 cup cut salad"],["1 tbsp roasted, ground flax seeds"]]},
+{t:"Snack",time:"4:00 pm",items:[["Smoothie","sattu, makhana, dates, almonds, pumpkin and sunflower seeds, banana, 200 ml milk"]]},
+{t:"Dinner",time:"8:00 pm",note:"Same as lunch. Protein: 100 g paneer or tofu, or dal / sprouts.",items:[["3 small chapatis OR 1 medium millet roti"],["¾ bowl cooked rice"],["1 tsp ghee"],["1 cup vegetable","less oil"],["Protein: paneer / tofu / dal / sprouts"],["1 glass buttermilk + 1 tsp jeera powder"],["1 cup cut salad"],["1 tbsp roasted, ground flax seeds"]]},
+{t:"Bedtime",time:"10:00 pm",items:[["2 dry figs"],["1 small cup milk"],["1 tsp ghee"]]},
+{t:"Daily habits",time:"",items:[["Don’t skip meals (eat every 3–4 hours)"],["2 glasses of milk"],["Fruit 2–3 times"],["Enough water, not right before meals"],["Strength training / exercise"],["Sleep 7–8 hours"]]}
+]};
+function ld(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+var uid=function(){return"n"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
+function build(d){var n=0;return{title:d.title,slots:d.slots.map(function(s,si){return{id:"s"+si,t:s.t,time:s.time||"",note:s.note||"",items:s.items.map(function(i,ii){return{id:"s"+si+"i"+ii,t:i[0],d:i[1]||""}})}})}}
+var DEF=build(DEFAULT),backup=null,PKEY="vdp-plan",TKEY="vdp-ticks-"+ld(new Date()),plan,ticks={},edit=false;
+try{plan=JSON.parse(localStorage.getItem(PKEY))}catch(e){}
+if(!plan||!plan.slots)plan=build(DEFAULT);
+try{ticks=JSON.parse(localStorage.getItem(TKEY))||{}}catch(e){}
+function sp(){try{localStorage.setItem(PKEY,JSON.stringify(plan))}catch(e){}}
+function st(){try{localStorage.setItem(TKEY,JSON.stringify(ticks))}catch(e){}}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function find(sid){return plan.slots.filter(function(s){return s.id===sid})[0]}
+function render(){
+var h="",total=0,done=0;
+document.getElementById("titleWrap").innerHTML=edit?'<input type="text" class="titleinp" data-f="title" value="'+esc(plan.title)+'" aria-label="Plan title">':'<h1>'+esc(plan.title)+'</h1>';
+document.title=plan.title;
+plan.slots.forEach(function(s){
+var d=0;s.items.forEach(function(i){if(ticks[i.id])d++});
+if(!edit){total+=s.items.length;done+=d}
+if(edit){
+h+='<section data-s="'+s.id+'"><div class="edhead"><input type="text" data-f="slot-t" value="'+esc(s.t)+'" aria-label="Meal name"><input type="text" class="time" data-f="slot-time" value="'+esc(s.time)+'" placeholder="Time" aria-label="Time"><button class="del" data-a="delslot">Delete</button></div>';
+h+='<div class="note"><input type="text" data-f="slot-note" value="'+esc(s.note)+'" placeholder="Optional note for this meal"></div>';
+s.items.forEach(function(i){h+='<div class="row" data-i="'+i.id+'"><div class="ed"><input type="text" data-f="item-t" value="'+esc(i.t)+'" aria-label="Item"><input type="text" data-f="item-d" value="'+esc(i.d)+'" placeholder="Details (optional)"></div><button class="del" data-a="delitem" aria-label="Remove item">✕</button></div>'});
+h+='<div style="padding-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" data-a="additem">+ Add item</button>'+(DEF.slots.some(function(x){return x.id===s.id})?'<button class="ghost" data-a="resetslot">Reset this meal to original</button>':'')+'</div></section>';
+}else{
+h+='<section class="'+(s.items.length&&d===s.items.length?"done":"")+'"><h2>'+esc(s.t)+'<span>'+(s.time?esc(s.time)+' · ':'')+d+'/'+s.items.length+'</span></h2>';
+if(s.note)h+='<p class="note">'+esc(s.note)+'</p>';
+s.items.forEach(function(i){h+='<label class="row"><input type="checkbox" data-k="'+i.id+'"'+(ticks[i.id]?' checked':'')+'><div>'+esc(i.t)+(i.d?'<small>'+esc(i.d)+'</small>':'')+'</div></label>'});
+h+='</section>';
+}});
+document.getElementById("app").innerHTML=h;
+var p=total?Math.round(done/total*100):0;
+document.getElementById("fill").style.width=p+"%";
+document.getElementById("pct").textContent=edit?"Editing – changes save automatically":p+"% done ("+done+"/"+total+")";
+["addSlot","export","import","restore","bring"].forEach(function(id){document.getElementById(id).classList.toggle("hide",!edit)});
+document.getElementById("reset").classList.toggle("hide",edit);
+document.getElementById("undo").classList.toggle("hide",!(edit&&backup));
+document.getElementById("hist").classList.toggle("hide",edit);
+document.getElementById("wt").classList.toggle("hide",edit);
+if(!edit)hist();
+document.getElementById("editBtn").textContent=edit?"Done":"Edit plan";
+}
+document.getElementById("date").textContent=new Date().toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
+function keep(fn){var y=window.scrollY;fn();render();window.scrollTo(0,y)}
+document.addEventListener("input",function(e){
+var f=e.target.getAttribute("data-f");if(!f)return;
+if(f==="title"){plan.title=e.target.value;sp();return}
+var sec=e.target.closest("section"),s=sec&&find(sec.getAttribute("data-s"));if(!s)return;
+if(f==="slot-t")s.t=e.target.value;
+else if(f==="slot-time")s.time=e.target.value;
+else if(f==="slot-note")s.note=e.target.value;
+else{var row=e.target.closest(".row"),id=row.getAttribute("data-i");
+s.items.forEach(function(i){if(i.id===id){if(f==="item-t")i.t=e.target.value;else i.d=e.target.value}})}
+sp()});
+document.addEventListener("change",function(e){var k=e.target.getAttribute("data-k");if(k){ticks[k]=e.target.checked;st();keep(function(){})}});
+document.addEventListener("click",function(e){
+var a=e.target.getAttribute("data-a");if(!a)return;
+var sec=e.target.closest("section"),s=sec&&find(sec.getAttribute("data-s"));
+if(a==="additem")keep(function(){s.items.push({id:uid(),t:"New item",d:""});sp()});
+if(a==="delitem"){var id=e.target.closest(".row").getAttribute("data-i");keep(function(){s.items=s.items.filter(function(i){return i.id!==id});sp()})}
+if(a==="resetslot"&&confirm("Reset “"+s.t+"” to the original meal?"))keep(function(){backup=JSON.stringify(plan);var o=JSON.parse(JSON.stringify(DEF.slots.filter(function(x){return x.id===s.id})[0]));plan.slots[plan.slots.indexOf(s)]=o;sp()});
+if(a==="delslot"&&confirm("Delete “"+s.t+"” and its items?"))keep(function(){plan.slots=plan.slots.filter(function(x){return x!==s});sp()})});
+document.getElementById("editBtn").onclick=function(){keep(function(){edit=!edit})};
+document.getElementById("addSlot").onclick=function(){keep(function(){plan.slots.push({id:uid(),t:"New meal",time:"",note:"",items:[{id:uid(),t:"New item",d:""}]});sp()})};
+document.getElementById("reset").onclick=function(){if(confirm("Clear all ticks for today?")){ticks={};st();render()}};
+document.getElementById("restore").onclick=function(){if(confirm("Replace your plan with the original plan? You can undo this.")){backup=JSON.stringify(plan);plan=build(DEFAULT);sp();render()}};
+document.getElementById("bring").onclick=function(){
+var have={};plan.slots.forEach(function(x){have[x.id]=1});
+var miss=DEF.slots.filter(function(x){return!have[x.id]});
+if(!miss.length){alert("No original meals are missing.");return}
+backup=JSON.stringify(plan);
+var out=DEF.slots.map(function(x){return have[x.id]?plan.slots.filter(function(y){return y.id===x.id})[0]:JSON.parse(JSON.stringify(x))});
+plan.slots.forEach(function(x){if(!DEF.slots.some(function(d){return d.id===x.id}))out.push(x)});
+plan.slots=out;sp();render()};
+document.getElementById("undo").onclick=function(){if(backup){plan=JSON.parse(backup);backup=null;sp();render()}};
+var DL=null;
+try{if(window.claude&&claude.use)claude.use("downloads").then(function(d){DL=d;if(edit)render()},function(){})}catch(e){}
+document.getElementById("export").onclick=function(){
+var data=JSON.stringify(plan,null,2);
+if(DL){DL.save({filename:"diet-plan.json",data:data}).catch(function(){})}
+else{var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download="diet-plan.json";a.click()}};
+document.getElementById("import").onclick=function(){document.getElementById("file").click()};
+document.getElementById("file").onchange=function(e){
+var f=e.target.files[0];if(!f)return;var r=new FileReader();
+r.onload=function(){try{var p=JSON.parse(r.result);if(!p.slots||!p.slots.length)throw 0;
+p.slots.forEach(function(s){s.id=s.id||uid();s.items=s.items||[];s.items.forEach(function(i){i.id=i.id||uid()})});
+plan=p;sp();render()}catch(x){alert("That file isn’t a valid plan.")}};r.readAsText(f);e.target.value=""};
+function hist(){
+var ids=[];plan.slots.forEach(function(s){s.items.forEach(function(i){ids.push(i.id)})});
+var h="<h2>Last 7 days</h2>",sum=0,days=0;
+for(var n=6;n>=0;n--){
+var d=new Date();d.setDate(d.getDate()-n);var t={};
+if(n===0)t=ticks;else{try{t=JSON.parse(localStorage.getItem("vdp-ticks-"+ld(d)))||{}}catch(e){}}
+var c=0;ids.forEach(function(id){if(t[id])c++});
+var p=ids.length?Math.round(c/ids.length*100):0;
+if(c>0){sum+=p;days++}
+h+='<div class="h'+(n?'':' today')+'"><span>'+d.toLocaleDateString(undefined,{weekday:"short",day:"numeric"})+'</span><div class="track"><div class="fill" style="width:'+p+'%"></div></div><b>'+p+'%</b></div>'}
+h+='<p class="note">'+(days?"Average on days you logged: "+Math.round(sum/days)+"%":"Tick items to start your history.")+'</p>';
+document.getElementById("hist").innerHTML=h}
+var W=[];try{W=JSON.parse(localStorage.getItem("vdp-weights"))||[]}catch(e){}
+function sw(){try{localStorage.setItem("vdp-weights",JSON.stringify(W))}catch(e){}}
+function wr(){
+var o=document.getElementById("wOut"),h="";
+if(!W.length){o.innerHTML='<p class="note">Add your weight once a week to see the trend.</p>';return}
+var df=Math.round((W[W.length-1].w-W[0].w)*10)/10;
+h+='<p class="note">Now '+W[W.length-1].w+' kg · '+(df>0?"+":"")+df+' kg since '+W[0].d+'</p>';
+if(W.length>1){
+var mn=Math.min.apply(null,W.map(function(x){return x.w})),mx=Math.max.apply(null,W.map(function(x){return x.w}));if(mx===mn){mx+=1;mn-=1}
+var pts=W.map(function(x,i){return[10+i*280/(W.length-1),10+(mx-x.w)*80/(mx-mn)]});
+h+='<svg class="ch" viewBox="0 0 300 100" role="img" aria-label="Weight trend"><polyline fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" points="'+pts.map(function(q){return q[0].toFixed(1)+","+q[1].toFixed(1)}).join(" ")+'"/>'+pts.map(function(q){return'<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="3.5" fill="var(--accent)"/>'}).join("")+'</svg>'}
+W.slice(-5).reverse().forEach(function(x){h+='<div class="wl"><span>'+x.d+' · '+x.w+' kg</span><button class="del" data-w="'+x.d+'" aria-label="Delete entry">✕</button></div>'});
+o.innerHTML=h}
+document.getElementById("wAdd").onclick=function(){
+var i=document.getElementById("wIn"),v=parseFloat(i.value);
+if(!(v>=20&&v<=300)){alert("Enter your weight in kg, e.g. 45.5");return}
+v=Math.round(v*10)/10;W=W.filter(function(x){return x.d!==ld(new Date())});W.push({d:ld(new Date()),w:v});W.sort(function(a,b){return a.d<b.d?-1:1});sw();i.value="";wr()};
+document.getElementById("wOut").addEventListener("click",function(e){var d=e.target.getAttribute("data-w");if(d&&confirm("Delete the entry for "+d+"?")){W=W.filter(function(x){return x.d!==d});sw();wr()}});
+render();wr();
+try{if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0)navigator.serviceWorker.register("sw.js").catch(function(){})}catch(e){}
+</script>
+</body>
+</html>
