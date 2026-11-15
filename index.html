@@ -5,21 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Veg Diet Plan – Weight Gain</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2f7d4f">
+<meta name="theme-color" content="#e8761a">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-:root{--bg:#f6f8f3;--card:#fff;--ink:#1f2a22;--mute:#5d6b61;--line:#dbe3d6;--accent:#2f7d4f;--soft:#e4f1e8;--danger:#b3372f;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#141a16;--card:#1d2620;--ink:#e8efe9;--mute:#9aa99f;--line:#2e3b32;--accent:#5cc189;--soft:#25382c;--danger:#ef8a82;color-scheme:dark}}
+:root{--bg:#fff4e6;--tint:#ffd8a6;--card:#fffdfa;--ink:#3b1b0b;--mute:#8a5d3f;--line:#f3d7b5;--accent:#e8761a;--ac-t:#b8530a;--gold:#f6b81a;--soft:#ffe6c7;--danger:#9b1c1c;--on:#fff;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#1a0d08;--tint:#3d1a08;--card:#271410;--ink:#ffeedd;--mute:#c9a58a;--line:#4a2a1c;--accent:#ff9f2e;--ac-t:#ff9f2e;--gold:#ffd24d;--soft:#3a2010;--danger:#f0857a;--on:#2a1204;color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+body{margin:0;background:var(--bg) linear-gradient(180deg,var(--tint),var(--bg) 280px) no-repeat;color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
 main{max-width:640px;margin:0 auto;padding:16px 14px 80px}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 h1{font-size:1.4rem;margin:8px 0 2px}
 .sub{color:var(--mute);font-size:.9rem;margin:0 0 8px}
 .bar{position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:5;border-bottom:1px solid var(--line)}
 .track{height:10px;background:var(--line);border-radius:6px;overflow:hidden}
-.fill{height:100%;width:0;background:var(--accent);transition:width .25s}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .25s}
 .pct{display:flex;justify-content:space-between;font-size:.9rem;margin-top:4px}
 section{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:14px 0;padding:12px 14px}
 section h2{font-size:1.05rem;margin:0;display:flex;justify-content:space-between;gap:8px}
@@ -31,7 +31,8 @@ label.row{cursor:pointer}
 input[type=checkbox]{width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent);flex:none}
 input:checked+div{color:var(--mute);text-decoration:line-through}
 small{display:block;color:var(--mute);font-size:.82rem}
-.done h2{color:var(--accent)}
+.done h2{color:var(--ac-t)}
+.ban{font-size:.9rem;font-weight:600;color:var(--ac-t);margin:0 0 2px}
 button,.btn{font:inherit;padding:9px 14px;border-radius:10px;border:1px solid var(--accent);background:var(--soft);color:var(--ink);cursor:pointer}
 button.ghost{background:transparent;border-color:var(--line)}
 button.del{border-color:var(--danger);color:var(--danger);background:transparent;padding:6px 10px;flex:none}
@@ -52,13 +53,20 @@ input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline
 .wl{display:flex;justify-content:space-between;align-items:center;font-size:.88rem;padding:5px 0;border-top:1px solid var(--line)}
 .wl button{padding:2px 8px}
 svg.ch{width:100%;height:110px;margin-top:8px}
+.mk{display:flex;gap:8px;flex:none}
+.mk button{width:40px;height:40px;padding:0;border-radius:50%;border:1.5px solid var(--line);background:transparent;color:var(--mute);display:flex;align-items:center;justify-content:center}
+.mk .y.on{background:var(--accent);border-color:var(--accent);color:var(--on)}
+.mk .n.on{background:var(--danger);border-color:var(--danger);color:var(--on)}
+.r-done .tx{color:var(--mute);text-decoration:line-through}
+.r-no .tx{color:var(--danger)}
 </style>
 </head>
 <body>
 <main>
+<div class="ban">🚩 जय श्री राम · जय हनुमान</div>
 <div class="top">
 <div style="flex:1;min-width:0"><div id="titleWrap"></div>
-<p class="sub" id="sub">Tick items as you eat. Tap “Edit plan” to rename, add or remove anything.</p></div>
+<p class="sub" id="sub">Tap ✓ if you ate it, ✕ if you skipped it. Tap “Edit plan” to rename, add or remove anything.</p></div>
 <button id="editBtn">Edit plan</button>
 </div>
 <div class="bar"><div class="track"><div class="fill" id="fill"></div></div>
@@ -91,6 +99,7 @@ var DEFAULT={title:"Veg Diet Plan – Weight Gain",slots:[
 {t:"Daily habits",time:"",items:[["Don’t skip meals (eat every 3–4 hours)"],["2 glasses of milk"],["Fruit 2–3 times"],["Enough water, not right before meals"],["Strength training / exercise"],["Sleep 7–8 hours"]]}
 ]};
 function ld(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+var TICK='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',CROSS='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 var uid=function(){return"n"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
 function build(d){var n=0;return{title:d.title,slots:d.slots.map(function(s,si){return{id:"s"+si,t:s.t,time:s.time||"",note:s.note||"",items:s.items.map(function(i,ii){return{id:"s"+si+"i"+ii,t:i[0],d:i[1]||""}})}})}}
 var DEF=build(DEFAULT),backup=null,PKEY="vdp-plan",TKEY="vdp-ticks-"+ld(new Date()),plan,ticks={},edit=false;
@@ -106,7 +115,7 @@ var h="",total=0,done=0;
 document.getElementById("titleWrap").innerHTML=edit?'<input type="text" class="titleinp" data-f="title" value="'+esc(plan.title)+'" aria-label="Plan title">':'<h1>'+esc(plan.title)+'</h1>';
 document.title=plan.title;
 plan.slots.forEach(function(s){
-var d=0;s.items.forEach(function(i){if(ticks[i.id])d++});
+var d=0;s.items.forEach(function(i){if(ticks[i.id]===true)d++});
 if(!edit){total+=s.items.length;done+=d}
 if(edit){
 h+='<section data-s="'+s.id+'"><div class="edhead"><input type="text" data-f="slot-t" value="'+esc(s.t)+'" aria-label="Meal name"><input type="text" class="time" data-f="slot-time" value="'+esc(s.time)+'" placeholder="Time" aria-label="Time"><button class="del" data-a="delslot">Delete</button></div>';
@@ -116,7 +125,7 @@ h+='<div style="padding-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button cla
 }else{
 h+='<section class="'+(s.items.length&&d===s.items.length?"done":"")+'"><h2>'+esc(s.t)+'<span>'+(s.time?esc(s.time)+' · ':'')+d+'/'+s.items.length+'</span></h2>';
 if(s.note)h+='<p class="note">'+esc(s.note)+'</p>';
-s.items.forEach(function(i){h+='<label class="row"><input type="checkbox" data-k="'+i.id+'"'+(ticks[i.id]?' checked':'')+'><div>'+esc(i.t)+(i.d?'<small>'+esc(i.d)+'</small>':'')+'</div></label>'});
+s.items.forEach(function(i){var v=ticks[i.id];h+='<div class="row '+(v===true?'r-done':v==="x"?'r-no':'')+'"><div class="tx" style="flex:1">'+esc(i.t)+(i.d?'<small>'+esc(i.d)+'</small>':'')+'</div><div class="mk"><button class="y'+(v===true?' on':'')+'" data-k="'+i.id+'" data-v="1" aria-label="Done" aria-pressed="'+(v===true)+'">'+TICK+'</button><button class="n'+(v==="x"?' on':'')+'" data-k="'+i.id+'" data-v="0" aria-label="Not done" aria-pressed="'+(v==="x")+'">'+CROSS+'</button></div></div>'});
 h+='</section>';
 }});
 document.getElementById("app").innerHTML=h;
@@ -143,7 +152,11 @@ else if(f==="slot-note")s.note=e.target.value;
 else{var row=e.target.closest(".row"),id=row.getAttribute("data-i");
 s.items.forEach(function(i){if(i.id===id){if(f==="item-t")i.t=e.target.value;else i.d=e.target.value}})}
 sp()});
-document.addEventListener("change",function(e){var k=e.target.getAttribute("data-k");if(k){ticks[k]=e.target.checked;st();keep(function(){})}});
+document.addEventListener("click",function(e){
+var b=e.target.closest("[data-k]");if(!b)return;
+var k=b.getAttribute("data-k"),v=b.getAttribute("data-v")==="1"?true:"x";
+if(ticks[k]===v)delete ticks[k];else ticks[k]=v;
+st();keep(function(){})});
 document.addEventListener("click",function(e){
 var a=e.target.getAttribute("data-a");if(!a)return;
 var sec=e.target.closest("section"),s=sec&&find(sec.getAttribute("data-s"));
@@ -182,11 +195,11 @@ var h="<h2>Last 7 days</h2>",sum=0,days=0;
 for(var n=6;n>=0;n--){
 var d=new Date();d.setDate(d.getDate()-n);var t={};
 if(n===0)t=ticks;else{try{t=JSON.parse(localStorage.getItem("vdp-ticks-"+ld(d)))||{}}catch(e){}}
-var c=0;ids.forEach(function(id){if(t[id])c++});
+var c=0,m=0;ids.forEach(function(id){if(t[id])m++;if(t[id]===true)c++});
 var p=ids.length?Math.round(c/ids.length*100):0;
-if(c>0){sum+=p;days++}
+if(m>0){sum+=p;days++}
 h+='<div class="h'+(n?'':' today')+'"><span>'+d.toLocaleDateString(undefined,{weekday:"short",day:"numeric"})+'</span><div class="track"><div class="fill" style="width:'+p+'%"></div></div><b>'+p+'%</b></div>'}
-h+='<p class="note">'+(days?"Average on days you logged: "+Math.round(sum/days)+"%":"Tick items to start your history.")+'</p>';
+h+='<p class="note">'+(days?"Average on days you logged: "+Math.round(sum/days)+"%":"Mark items to start your history.")+'</p>';
 document.getElementById("hist").innerHTML=h}
 var W=[];try{W=JSON.parse(localStorage.getItem("vdp-weights"))||[]}catch(e){}
 function sw(){try{localStorage.setItem("vdp-weights",JSON.stringify(W))}catch(e){}}
