@@ -6,8 +6,8 @@
 <title>Veg Diet Plan – Weight Gain</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#e8761a">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-v2-192.png">
+<link rel="apple-touch-icon" href="icon-v2-192.png">
 <style>
 :root{--bg:#fff4e6;--tint:#ffd8a6;--card:#fffdfa;--ink:#3b1b0b;--mute:#8a5d3f;--line:#f3d7b5;--accent:#e8761a;--ac-t:#b8530a;--gold:#f6b81a;--soft:#ffe6c7;--danger:#9b1c1c;--on:#fff;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#1a0d08;--tint:#3d1a08;--card:#271410;--ink:#ffeedd;--mute:#c9a58a;--line:#4a2a1c;--accent:#ff9f2e;--ac-t:#ff9f2e;--gold:#ffd24d;--soft:#3a2010;--danger:#f0857a;--on:#2a1204;color-scheme:dark}}
@@ -36,7 +36,7 @@ small{display:block;color:var(--mute);font-size:.82rem}
 button,.btn{font:inherit;padding:9px 14px;border-radius:10px;border:1px solid var(--accent);background:var(--soft);color:var(--ink);cursor:pointer}
 button.ghost{background:transparent;border-color:var(--line)}
 button.del{border-color:var(--danger);color:var(--danger);background:transparent;padding:6px 10px;flex:none}
-input[type=text],input[type=number]{font:inherit;width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
+input[type=text],input[type=number],input[type=date]{font:inherit;width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
 .ed{flex:1;display:flex;flex-direction:column;gap:6px}
 .edhead{display:flex;gap:8px;align-items:center}
 .edhead .time{max-width:120px}
@@ -59,6 +59,12 @@ svg.ch{width:100%;height:110px;margin-top:8px}
 .mk .n.on{background:var(--danger);border-color:var(--danger);color:var(--on)}
 .r-done .tx{color:var(--mute);text-decoration:line-through}
 .r-no .tx{color:var(--danger)}
+.dn{display:flex;gap:8px;align-items:center;margin:8px 0 2px}
+.dn input{flex:1;max-width:200px}
+.dn button{padding:6px 14px;font-size:1.2rem;line-height:1}
+.dn button:disabled{opacity:.35;cursor:default}
+.h[data-d]{cursor:pointer;border-radius:8px;padding:4px 6px}
+.h.sel{background:var(--soft)}
 </style>
 </head>
 <body>
@@ -69,16 +75,17 @@ svg.ch{width:100%;height:110px;margin-top:8px}
 <p class="sub" id="sub">Tap ✓ if you ate it, ✕ if you skipped it. Tap “Edit plan” to rename, add or remove anything.</p></div>
 <button id="editBtn">Edit plan</button>
 </div>
+<div class="dn" id="dn"><button id="dPrev" aria-label="Previous day">‹</button><input type="date" id="dIn" aria-label="Pick a date"><button id="dNext" aria-label="Next day">›</button><button id="dToday" class="hide" style="font-size:.9rem">Today</button></div>
 <div class="bar"><div class="track"><div class="fill" id="fill"></div></div>
 <div class="pct"><span id="pct">0%</span><span id="date"></span></div></div>
 <div id="app"></div>
 <section id="hist"></section>
 <section id="wt"><h2>Weight log</h2>
-<div class="wrow"><input type="number" id="wIn" step="0.1" min="20" max="300" inputmode="decimal" placeholder="kg today" aria-label="Weight in kg"><button id="wAdd">Save weight</button></div>
+<div class="wrow"><input type="number" id="wIn" step="0.1" min="20" max="300" inputmode="decimal" placeholder="kg" aria-label="Weight in kg"><button id="wAdd">Save weight</button></div>
 <div id="wOut"></div></section>
 <div class="tools">
 <button id="addSlot" class="ghost hide">+ Add meal</button>
-<button id="reset" class="ghost">Clear today’s ticks</button>
+<button id="reset" class="ghost">Clear this day’s marks</button>
 <button id="export" class="ghost hide">Export plan</button>
 <button id="import" class="ghost hide">Import plan</button>
 <button id="restore" class="ghost hide">Restore original plan</button>
@@ -102,12 +109,13 @@ function ld(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+(
 var TICK='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',CROSS='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 var uid=function(){return"n"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
 function build(d){var n=0;return{title:d.title,slots:d.slots.map(function(s,si){return{id:"s"+si,t:s.t,time:s.time||"",note:s.note||"",items:s.items.map(function(i,ii){return{id:"s"+si+"i"+ii,t:i[0],d:i[1]||""}})}})}}
-var DEF=build(DEFAULT),backup=null,PKEY="vdp-plan",TKEY="vdp-ticks-"+ld(new Date()),plan,ticks={},edit=false;
+var DEF=build(DEFAULT),backup=null,PKEY="vdp-plan",TD=ld(new Date()),VD=TD,MIN=(function(){var c=new Date();c.setDate(c.getDate()-366);return ld(c)})(),plan,ticks={},edit=false;
+function tk(d){return"vdp-ticks-"+d}
 try{plan=JSON.parse(localStorage.getItem(PKEY))}catch(e){}
 if(!plan||!plan.slots)plan=build(DEFAULT);
-try{ticks=JSON.parse(localStorage.getItem(TKEY))||{}}catch(e){}
+try{ticks=JSON.parse(localStorage.getItem(tk(VD)))||{}}catch(e){}
 function sp(){try{localStorage.setItem(PKEY,JSON.stringify(plan))}catch(e){}}
-function st(){try{localStorage.setItem(TKEY,JSON.stringify(ticks))}catch(e){}}
+function st(){try{localStorage.setItem(tk(VD),JSON.stringify(ticks))}catch(e){}}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function find(sid){return plan.slots.filter(function(s){return s.id===sid})[0]}
 function render(){
@@ -123,7 +131,7 @@ h+='<div class="note"><input type="text" data-f="slot-note" value="'+esc(s.note)
 s.items.forEach(function(i){h+='<div class="row" data-i="'+i.id+'"><div class="ed"><input type="text" data-f="item-t" value="'+esc(i.t)+'" aria-label="Item"><input type="text" data-f="item-d" value="'+esc(i.d)+'" placeholder="Details (optional)"></div><button class="del" data-a="delitem" aria-label="Remove item">✕</button></div>'});
 h+='<div style="padding-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" data-a="additem">+ Add item</button>'+(DEF.slots.some(function(x){return x.id===s.id})?'<button class="ghost" data-a="resetslot">Reset this meal to original</button>':'')+'</div></section>';
 }else{
-h+='<section class="'+(s.items.length&&d===s.items.length?"done":"")+'"><h2>'+esc(s.t)+'<span>'+(s.time?esc(s.time)+' · ':'')+d+'/'+s.items.length+'</span></h2>';
+h+='<section class="'+(s.items.length&&d===s.items.length?"done":"")+'" data-sl="'+s.id+'"><h2>'+esc(s.t)+'<span>'+(s.time?esc(s.time)+' · ':'')+d+'/'+s.items.length+'</span></h2>';
 if(s.note)h+='<p class="note">'+esc(s.note)+'</p>';
 s.items.forEach(function(i){var v=ticks[i.id];h+='<div class="row '+(v===true?'r-done':v==="x"?'r-no':'')+'"><div class="tx" style="flex:1">'+esc(i.t)+(i.d?'<small>'+esc(i.d)+'</small>':'')+'</div><div class="mk"><button class="y'+(v===true?' on':'')+'" data-k="'+i.id+'" data-v="1" aria-label="Done" aria-pressed="'+(v===true)+'">'+TICK+'</button><button class="n'+(v==="x"?' on':'')+'" data-k="'+i.id+'" data-v="0" aria-label="Not done" aria-pressed="'+(v==="x")+'">'+CROSS+'</button></div></div>'});
 h+='</section>';
@@ -134,13 +142,13 @@ document.getElementById("fill").style.width=p+"%";
 document.getElementById("pct").textContent=edit?"Editing – changes save automatically":p+"% done ("+done+"/"+total+")";
 ["addSlot","export","import","restore","bring"].forEach(function(id){document.getElementById(id).classList.toggle("hide",!edit)});
 document.getElementById("reset").classList.toggle("hide",edit);
+setNav();
 document.getElementById("undo").classList.toggle("hide",!(edit&&backup));
 document.getElementById("hist").classList.toggle("hide",edit);
 document.getElementById("wt").classList.toggle("hide",edit);
 if(!edit)hist();
 document.getElementById("editBtn").textContent=edit?"Done":"Edit plan";
 }
-document.getElementById("date").textContent=new Date().toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
 function keep(fn){var y=window.scrollY;fn();render();window.scrollTo(0,y)}
 document.addEventListener("input",function(e){
 var f=e.target.getAttribute("data-f");if(!f)return;
@@ -166,7 +174,7 @@ if(a==="resetslot"&&confirm("Reset “"+s.t+"” to the original meal?"))keep(fu
 if(a==="delslot"&&confirm("Delete “"+s.t+"” and its items?"))keep(function(){plan.slots=plan.slots.filter(function(x){return x!==s});sp()})});
 document.getElementById("editBtn").onclick=function(){keep(function(){edit=!edit})};
 document.getElementById("addSlot").onclick=function(){keep(function(){plan.slots.push({id:uid(),t:"New meal",time:"",note:"",items:[{id:uid(),t:"New item",d:""}]});sp()})};
-document.getElementById("reset").onclick=function(){if(confirm("Clear all ticks for today?")){ticks={};st();render()}};
+document.getElementById("reset").onclick=function(){if(confirm("Clear all marks for this day?")){ticks={};st();render()}};
 document.getElementById("restore").onclick=function(){if(confirm("Replace your plan with the original plan? You can undo this.")){backup=JSON.stringify(plan);plan=build(DEFAULT);sp();render()}};
 document.getElementById("bring").onclick=function(){
 var have={};plan.slots.forEach(function(x){have[x.id]=1});
@@ -191,17 +199,18 @@ p.slots.forEach(function(s){s.id=s.id||uid();s.items=s.items||[];s.items.forEach
 plan=p;sp();render()}catch(x){alert("That file isn’t a valid plan.")}};r.readAsText(f);e.target.value=""};
 function hist(){
 var ids=[];plan.slots.forEach(function(s){s.items.forEach(function(i){ids.push(i.id)})});
-var h="<h2>Last 7 days</h2>",sum=0,days=0;
+var h="<h2>Last 7 days<span>tap a day to open</span></h2>",sum=0,days=0;
 for(var n=6;n>=0;n--){
-var d=new Date();d.setDate(d.getDate()-n);var t={};
-if(n===0)t=ticks;else{try{t=JSON.parse(localStorage.getItem("vdp-ticks-"+ld(d)))||{}}catch(e){}}
+var d=new Date();d.setDate(d.getDate()-n);var t={},dk=ld(d);
+try{t=JSON.parse(localStorage.getItem(tk(dk)))||{}}catch(e){}
 var c=0,m=0;ids.forEach(function(id){if(t[id])m++;if(t[id]===true)c++});
 var p=ids.length?Math.round(c/ids.length*100):0;
 if(m>0){sum+=p;days++}
-h+='<div class="h'+(n?'':' today')+'"><span>'+d.toLocaleDateString(undefined,{weekday:"short",day:"numeric"})+'</span><div class="track"><div class="fill" style="width:'+p+'%"></div></div><b>'+p+'%</b></div>'}
+h+='<div class="h'+(n?'':' today')+(dk===VD?' sel':'')+'" data-d="'+dk+'" role="button" tabindex="0"><span>'+d.toLocaleDateString(undefined,{weekday:"short",day:"numeric"})+'</span><div class="track"><div class="fill" style="width:'+p+'%"></div></div><b>'+p+'%</b></div>'}
 h+='<p class="note">'+(days?"Average on days you logged: "+Math.round(sum/days)+"%":"Mark items to start your history.")+'</p>';
 document.getElementById("hist").innerHTML=h}
 var W=[];try{W=JSON.parse(localStorage.getItem("vdp-weights"))||[]}catch(e){}
+var wAll=false;
 function sw(){try{localStorage.setItem("vdp-weights",JSON.stringify(W))}catch(e){}}
 function wr(){
 var o=document.getElementById("wOut"),h="";
@@ -212,14 +221,51 @@ if(W.length>1){
 var mn=Math.min.apply(null,W.map(function(x){return x.w})),mx=Math.max.apply(null,W.map(function(x){return x.w}));if(mx===mn){mx+=1;mn-=1}
 var pts=W.map(function(x,i){return[10+i*280/(W.length-1),10+(mx-x.w)*80/(mx-mn)]});
 h+='<svg class="ch" viewBox="0 0 300 100" role="img" aria-label="Weight trend"><polyline fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" points="'+pts.map(function(q){return q[0].toFixed(1)+","+q[1].toFixed(1)}).join(" ")+'"/>'+pts.map(function(q){return'<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="3.5" fill="var(--accent)"/>'}).join("")+'</svg>'}
-W.slice(-5).reverse().forEach(function(x){h+='<div class="wl"><span>'+x.d+' · '+x.w+' kg</span><button class="del" data-w="'+x.d+'" aria-label="Delete entry">✕</button></div>'});
+(wAll?W.slice():W.slice(-5)).reverse().forEach(function(x){h+='<div class="wl"><span>'+x.d+' · '+x.w+' kg</span><button class="del" data-w="'+x.d+'" aria-label="Delete entry">✕</button></div>'});
+if(W.length>5)h+='<div style="padding-top:8px"><button class="ghost" data-more="1">'+(wAll?"Show fewer":"Show all ("+W.length+")")+'</button></div>';
 o.innerHTML=h}
 document.getElementById("wAdd").onclick=function(){
 var i=document.getElementById("wIn"),v=parseFloat(i.value);
 if(!(v>=20&&v<=300)){alert("Enter your weight in kg, e.g. 45.5");return}
-v=Math.round(v*10)/10;W=W.filter(function(x){return x.d!==ld(new Date())});W.push({d:ld(new Date()),w:v});W.sort(function(a,b){return a.d<b.d?-1:1});sw();i.value="";wr()};
-document.getElementById("wOut").addEventListener("click",function(e){var d=e.target.getAttribute("data-w");if(d&&confirm("Delete the entry for "+d+"?")){W=W.filter(function(x){return x.d!==d});sw();wr()}});
-render();wr();
+v=Math.round(v*10)/10;W=W.filter(function(x){return x.d!==VD});W.push({d:VD,w:v});W.sort(function(a,b){return a.d<b.d?-1:1});sw();i.value="";wr()};
+document.getElementById("wOut").addEventListener("click",function(e){if(e.target.getAttribute("data-more")){wAll=!wAll;wr();return}var d=e.target.getAttribute("data-w");if(d&&confirm("Delete the entry for "+d+"?")){W=W.filter(function(x){return x.d!==d});sw();wr()}});
+function addDays(d,n){var x=new Date(d+"T00:00:00");x.setDate(x.getDate()+n);return ld(x)}
+function goDay(d){if(d<MIN)d=MIN;if(d>TD)d=TD;VD=d;try{ticks=JSON.parse(localStorage.getItem(tk(VD)))||{}}catch(e){ticks={}}render()}
+function setNav(){
+document.getElementById("date").textContent=(VD===TD?"Today · ":"")+new Date(VD+"T00:00:00").toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
+var di=document.getElementById("dIn");di.value=VD;di.min=MIN;di.max=TD;
+document.getElementById("dPrev").disabled=VD<=MIN;
+document.getElementById("dNext").disabled=VD>=TD;
+document.getElementById("dToday").classList.toggle("hide",VD===TD);
+document.getElementById("dn").classList.toggle("hide",edit)}
+document.getElementById("dPrev").onclick=function(){goDay(addDays(VD,-1))};
+document.getElementById("dNext").onclick=function(){goDay(addDays(VD,1))};
+document.getElementById("dToday").onclick=function(){goDay(TD)};
+document.getElementById("dIn").onchange=function(){if(this.value)goDay(this.value)};
+function openDay(e){var r=e.target.closest("[data-d]");if(r){goDay(r.getAttribute("data-d"));window.scrollTo(0,0)}}
+document.getElementById("hist").addEventListener("click",openDay);
+document.getElementById("hist").addEventListener("keydown",function(e){if(e.key==="Enter")openDay(e)});
+function prune(){
+try{for(var i=localStorage.length-1;i>=0;i--){var k=localStorage.key(i);if(k&&k.indexOf("vdp-ticks-")===0&&k.slice(10)<MIN)localStorage.removeItem(k)}}catch(e){}
+var n=W.length;W=W.filter(function(x){return x.d>=MIN});if(W.length!==n)sw()}
+function filled(s){return s.items.every(function(i){return ticks[i.id]===true||ticks[i.id]==="x"})}
+function autoScroll(){
+if(edit||VD!==TD)return;
+var t=null;
+for(var i=0;i<plan.slots.length;i++){var s=plan.slots[i];if(s.id==="s7"||!s.items.length)continue;if(!filled(s)){t=s;break}}
+if(!t){window.scrollTo(0,0);return}
+var el=document.querySelector('[data-sl="'+t.id+'"]');if(!el)return;
+var bar=document.querySelector(".bar");
+window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-(bar?bar.offsetHeight:0)-8)}
+var hid=0;
+document.addEventListener("visibilitychange",function(){
+if(document.hidden){hid=Date.now();return}
+if(ld(new Date())!==TD){location.reload();return}
+if(hid&&Date.now()-hid>600000)autoScroll();
+hid=0});
+prune();render();wr();
+try{history.scrollRestoration="manual"}catch(e){}
+requestAnimationFrame(autoScroll);
 try{if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0)navigator.serviceWorker.register("sw.js").catch(function(){})}catch(e){}
 </script>
 </body>
